@@ -67,18 +67,17 @@ def evolt(Dij,Rmn,pR,Ncycles,pL=0): #evolves the correlation matrix Dij using th
     return Dij_t #return correlation matrix
 
 
-def Transient_Cr_avg(L,t1,t2,t12,pR,pL,Nmax,t_step=1,R=0,D0=0):
+def Transient_Cr_avg(L,t1,t2,t12,pR,pL,Nmax,t_step=1,R=0):
     #This function evolves the system in time until Nmax cycles.
-    #Nmax is the maximum number of cycles we want to evolve. t_step is how many cycles between one entropy computation and the next, default is 1, if change it then write t_step=x with x the number of cycles.ALWAYS MAKE SURE Nmax IS DIVISIBLE BY t_step
+    #Nmax is the maximum number of cycles we want to evolve. t_step is how many cycles between one correlation computation and the next, default is 1, if change it then write t_step=x with x the number of cycles.ALWAYS MAKE SURE Nmax IS DIVISIBLE BY t_step
     #For each time step we compute the correlation matrix before and after the measurements.
     #We extract the space averaged correlation function vs r for both chains and for inter-chain correlations.
     #Output is six correlations vs r (before/after and 11/12/22 chains)
     if len(np.shape(R))==0:
         R = Rmn(0.5,t1,t2,t12,L)
-    if len(np.shape(D0))==0:
-        v1 = np.random.permutation(np.concatenate([np.zeros(int(L/2)),np.ones(int(L/2))]))
-        v2 = np.random.permutation(np.concatenate([np.zeros(int(L/2)),np.ones(int(L/2))]))
-        D0 = np.array(np.diag(np.concatenate((v1,v2))),dtype=complex)
+    v1 = np.random.permutation(np.concatenate([np.zeros(int(L/2)),np.ones(int(L/2))]))
+    v2 = np.random.permutation(np.concatenate([np.zeros(int(L/2)),np.ones(int(L/2))]))
+    D0 = np.array(np.diag(np.concatenate((v1,v2))),dtype=complex)
     NT = int(Nmax/t_step)
     Cr11A=np.zeros((NT,L//2+1),dtype=complex)
     Cr12A=np.zeros((NT,L),dtype=complex)
@@ -93,22 +92,29 @@ def Transient_Cr_avg(L,t1,t2,t12,pR,pL,Nmax,t_step=1,R=0,D0=0):
     jp_1 = (j_values + r_1) % L  # Compute indices with periodic BCs
     jp_12 = (j_values + r_12) % L  # Compute indices with periodic BCs
 
-    for i in range(NT):
-        D1 = np.abs(D0.copy())**2
-        D11 = D1[:L,:L]
-        D12 = D1[:L,L:]
-        D22 = D1[L:,L:]
-        Cr11B[i,:] = np.mean(D11[j_values, jp_1], axis=0)
-        Cr12B[i,:] = np.mean(D12[j_values, jp_12], axis=0)
-        Cr22B[i,:] = np.mean(D22[j_values, jp_1], axis=0)
-        D0 = evolt(D0,R,pR,1,pL)
-        D1 = np.abs(D0.copy())**2
-        D11 = D1[:L,:L]
-        D12 = D1[:L,L:]
-        D22 = D1[L:,L:]
-        Cr11A[i,:] = np.mean(D11[j_values, jp_1], axis=0)
-        Cr12A[i,:] = np.mean(D12[j_values, jp_12], axis=0)
-        Cr22A[i,:] = np.mean(D22[j_values, jp_1], axis=0)
-        D0 = evolt(D0,R,0,1,pL=0)#just perform the evolution for t_step cycles
+    #loop over the number of cycles
+    for i in range(Nmax):
+        #compute correlations BEFORE measurements (but only every t_step cycles)
+        if i%t_step==0:
+            D1 = np.abs(D0.copy())**2
+            D11 = D1[:L,:L]
+            D12 = D1[:L,L:]
+            D22 = D1[L:,L:]
+            Cr11B[i,:] = np.mean(D11[j_values, jp_1], axis=0)
+            Cr12B[i,:] = np.mean(D12[j_values, jp_12], axis=0)
+            Cr22B[i,:] = np.mean(D22[j_values, jp_1], axis=0)
+        #evolve for half a cycle with unitary evolution + measurements at the end
+        D0 = evolt(D0,R,pR,1,pL) 
+        #compute correlations AFTER measurements (but only every t_step cycles)
+        if i%t_step==0:
+            D1 = np.abs(D0.copy())**2
+            D11 = D1[:L,:L]
+            D12 = D1[:L,L:]
+            D22 = D1[L:,L:]
+            Cr11A[i,:] = np.mean(D11[j_values, jp_1], axis=0)
+            Cr12A[i,:] = np.mean(D12[j_values, jp_12], axis=0)
+            Cr22A[i,:] = np.mean(D22[j_values, jp_1], axis=0)
+        #evolve for the remaining half a cycle with unitary evolution but no measurement
+        D0 = evolt(D0,R,0,1,pL=0)
         
     return Cr11A,Cr12A,Cr22A,Cr11B,Cr12B,Cr22B,tvec
