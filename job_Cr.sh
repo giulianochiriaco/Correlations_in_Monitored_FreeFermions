@@ -23,7 +23,7 @@ t1=1
 t2=1.0
 t12=1.570796
 L=32
-Nmax=200
-NRseries=30
+Nmax=100
+NRseries=100
 
 python3 FF_TransientCr.py $L $t1 $t2 $t12 $pR $Nmax $NRseries $multiplier
