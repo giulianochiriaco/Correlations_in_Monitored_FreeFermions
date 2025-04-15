@@ -16,7 +16,7 @@
 #SBATCH --error=./Errors/Cr.e%A-%a
 #
 
-pR=${SLURM_ARRAY_TASK_ID}
+p2=${SLURM_ARRAY_TASK_ID}
 multiplier=0.05
 
 t1=1
@@ -26,4 +26,4 @@ L=32
 Nmax=100
 NRseries=100
 
-python3 FF_TransientCr.py $L $t1 $t2 $t12 $pR $Nmax $NRseries $multiplier
+python3 FF_TransientCr.py $L $t1 $t2 $t12 $p2 $Nmax $NRseries $multiplier
