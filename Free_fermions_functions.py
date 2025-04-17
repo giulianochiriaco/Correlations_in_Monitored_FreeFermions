@@ -54,7 +54,7 @@ def KronD(i, j):  # kronecker delta
     # return int(i==j)
 
 
-def evolt(Dij, Rmn, pR, Ncycles, pL=0):  # evolves the correlation matrix Dij using the evolution operator Rmn for Nsteps cycles, with measurement probability pR on the second chain and with measurement probability pL on the first chain
+def evolt(Dij, Rmn, p2, Ncycles, p1=0):  # evolves the correlation matrix Dij using the evolution operator Rmn for Nsteps cycles, with measurement probability p2 on the second chain and with measurement probability p1 on the first chain
     time_counter = 0
     Dij_t = Dij
     # gets number of sites (divided by 2 because Dij is 2L x 2L
@@ -66,7 +66,7 @@ def evolt(Dij, Rmn, pR, Ncycles, pL=0):  # evolves the correlation matrix Dij us
         # measurement part, performed for every site of the second chain (from L+1 to 2*L)
         for k in np.random.permutation(np.arange(L)):
             p1 = random.random()
-            if p1 < pL:  # if random number smaller than p perform measurement, otherwise do nothing
+            if p1 < p1:  # if random number smaller than p perform measurement, otherwise do nothing
                 Dkk = Dij_t[k, k]  # get occupation nk of site k
                 p2 = random.random()
                 if p2 < Dkk:  # if second random number is smaller than nk, then apply nk=c_k^dag*c_k operator, otherwise apply 1-nk
@@ -82,7 +82,7 @@ def evolt(Dij, Rmn, pR, Ncycles, pL=0):  # evolves the correlation matrix Dij us
         # measurement part, performed for every site of the second chain (from L+1 to 2*L)
         for k in np.random.permutation(np.arange(L, 2*L)):
             p1 = random.random()
-            if p1 < pR:  # if random number smaller than p perform measurement, otherwise do nothing
+            if p1 < p2:  # if random number smaller than p perform measurement, otherwise do nothing
                 Dkk = Dij_t[k, k]  # get occupation nk of site k
                 p2 = random.random()
                 if p2 < Dkk:  # if second random number is smaller than nk, then apply nk=c_k^dag*c_k operator, otherwise apply 1-nk
@@ -99,7 +99,7 @@ def evolt(Dij, Rmn, pR, Ncycles, pL=0):  # evolves the correlation matrix Dij us
     return Dij_t  # return correlation matrix
 
 
-def Transient_Cr_avg(L, t1, t2, t12, pR, pL, Nmax, t_step=1, R=0):
+def Transient_Cr_avg(L, t1, t2, t12, p2, p1, Nmax, t_step=1, R=0):
     # This function evolves the system in time until Nmax cycles.
     # Nmax is the maximum number of cycles we want to evolve. t_step is how many cycles between one correlation computation and the next, default is 1, if change it then write t_step=x with x the number of cycles.ALWAYS MAKE SURE Nmax IS DIVISIBLE BY t_step
     # For each time step we compute the correlation matrix before and after the measurements.
@@ -139,7 +139,7 @@ def Transient_Cr_avg(L, t1, t2, t12, pR, pL, Nmax, t_step=1, R=0):
             Cr12B[i, :] = np.mean(D12[j_values, jp_12], axis=0)
             Cr22B[i, :] = np.mean(D22[j_values, jp_1], axis=0)
         # evolve for half a cycle with unitary evolution + measurements at the end
-        D0 = evolt(D0, R, pR, 1, pL)
+        D0 = evolt(D0, R, p2, 1, p1)
         # compute correlations AFTER measurements (but only every t_step cycles)
         if i % t_step == 0:
             D1 = np.abs(D0.copy())**2
@@ -150,6 +150,6 @@ def Transient_Cr_avg(L, t1, t2, t12, pR, pL, Nmax, t_step=1, R=0):
             Cr12A[i, :] = np.mean(D12[j_values, jp_12], axis=0)
             Cr22A[i, :] = np.mean(D22[j_values, jp_1], axis=0)
         # evolve for the remaining half a cycle with unitary evolution but no measurement
-        D0 = evolt(D0, R, 0, 1, pL=0)
+        D0 = evolt(D0, R, 0, 1, p1=0)
 
     return Cr11A, Cr12A, Cr22A, Cr11B, Cr12B, Cr22B, tvec
