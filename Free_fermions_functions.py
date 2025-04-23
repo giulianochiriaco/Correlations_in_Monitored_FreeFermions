@@ -144,6 +144,3 @@ def Transient_Cr_avg(L, t1, t2, t12, pR, pL, Nmax, t_step=1, R=0):
         D0 = evolt(D0, R, 0, 1, pL=0)
 
     return Cr11A, Cr12A, Cr22A, Cr11B, Cr12B, Cr22B, tvec
-
-
-# Ciao Peppe
